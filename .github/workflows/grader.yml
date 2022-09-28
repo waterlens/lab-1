@@ -38,7 +38,6 @@ jobs:
         path: ./work/grader/
     - run: |
         cat <<EOT > run.sh
-        cd /work
         cd ./stu
         opam install . -y
         cd ..
@@ -56,5 +55,5 @@ jobs:
     - if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
       run: wget -O ./ppl-ocaml-env.tar.xz ${{ secrets.IMAGE_URL }}
     - run: docker load --input ./ppl-ocaml-env.tar.xz
-    - run: exec -c docker run -v ${{ github.workspace }}/work:/work -w /work ppl-ocaml-env:latest sh run.sh
+    - run: exec -c docker run -v ${{ github.workspace }}/work:/home/opam/work -w /home/opam/work ppl-ocaml-env:latest sh run.sh
     

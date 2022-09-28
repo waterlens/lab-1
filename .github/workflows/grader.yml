@@ -45,7 +45,9 @@ jobs:
         cd ./grader
         timeout 10s dune exec grader
         EOT
-    - run: chmod +x run.sh
+    - run: |
+        chmod +x run.sh
+        mv run.sh ./work/run.sh
     - uses: actions/cache@v3
       id: cache-env
       with:

@@ -1,0 +1,13 @@
+name: cache
+on: [workflow_dispatch]
+jobs:
+  cache:
+   runs-on: ubuntu-22.04
+   steps:
+    - uses: actions/cache@v3
+      id: cache-env
+      with:
+        key: ppl-ocaml-env
+        path: ./ppl-ocaml-env.tar.xz
+    - if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
+      run: wget -O ./ppl-ocaml-env.tar.xz ${{ secrets.IMAGE_URL }}

@@ -1,0 +1,57 @@
+name: grader
+on:
+  workflow_run:
+    workflows: ["packer"]
+    types:
+      - completed
+jobs:
+  grade:
+   runs-on: ubuntu-22.04
+   if: ${{ github.event.workflow_run.conclusion == 'success' }}
+   steps:
+    - uses: actions/github-script@v3.1.0
+      with:
+        script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "stu-code"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/stu-code.zip', Buffer.from(download.data));
+    - run: unzip stu-code.zip -d work/stu/
+    - uses: actions/checkout@v3
+      with:
+        repository: ZJU-PPL/graders
+        ref: lab-1
+        token: ${{ secrets.GRADER_PAT }}
+        path: work/grader/
+    - run: |
+        cat <<EOT > run.sh
+        cd /work
+        cd ./stu
+        opam install . -y
+        cd ..
+        cd ./grader
+        timeout 10s dune exec grader
+        EOT
+    - run: chmod +x run.sh
+    - uses: actions/cache@v3
+      id: cache-env
+      with:
+        key: ppl-ocaml-env
+        path: ./ppl-ocaml-env.tar.xz
+    - if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
+      run: wget -O ./ppl-ocaml-env.tar.xz ${{ secrets.IMAGE_URL }}
+    - run: docker load --input ./ppl-ocaml-env.tar.xz
+    - run: exec -c docker run -v ${{ github.workspace }}/work:/work -w /work ppl-ocaml-env:latest sh run.sh
+    

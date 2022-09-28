@@ -28,13 +28,14 @@ jobs:
             });
             var fs = require('fs');
             fs.writeFileSync('${{github.workspace}}/stu-code.zip', Buffer.from(download.data));
-    - run: unzip stu-code.zip -d work/stu/
+    - run: mkdir -p ./work
+    - run: unzip stu-code.zip -d ./work/stu/
     - uses: actions/checkout@v3
       with:
         repository: ZJU-PPL/graders
         ref: lab-1
         token: ${{ secrets.GRADER_PAT }}
-        path: work/grader/
+        path: ./work/grader/
     - run: |
         cat <<EOT > run.sh
         cd /work

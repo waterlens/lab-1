@@ -28,16 +28,18 @@ jobs:
             });
             var fs = require('fs');
             fs.writeFileSync('${{github.workspace}}/stu-code.zip', Buffer.from(download.data));
-    - run: mkdir -p ./work
-    - run: unzip stu-code.zip -d ./work/stu/
+    - run: mkdir -p ./src
+    - run: unzip stu-code.zip -d ./src/stu/
     - uses: actions/checkout@v3
       with:
         repository: ZJU-PPL/graders
         ref: lab-1
         token: ${{ secrets.GRADER_PAT }}
-        path: ./work/grader/
+        path: ./src/grader/
     - run: |
         cat <<EOT > run.sh
+        cp -r ./ ../work
+        cd ../work
         cd ./stu
         opam install . -y
         cd ..
@@ -46,7 +48,7 @@ jobs:
         EOT
     - run: |
         chmod +x run.sh
-        mv run.sh ./work/run.sh
+        mv run.sh ./src/run.sh
     - uses: actions/cache@v3
       id: cache-env
       with:
@@ -55,5 +57,5 @@ jobs:
     - if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
       run: wget -O ./ppl-ocaml-env.tar.xz ${{ secrets.IMAGE_URL }}
     - run: docker load --input ./ppl-ocaml-env.tar.xz
-    - run: exec -c docker run -v ${{ github.workspace }}/work:/home/opam/work -w /home/opam/work ppl-ocaml-env:latest sh run.sh
+    - run: exec -c docker run -v ${{ github.workspace }}/src:/home/opam/src -w /home/opam/src ppl-ocaml-env:latest sh run.sh
     
